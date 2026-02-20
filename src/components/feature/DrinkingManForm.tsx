@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -30,6 +30,10 @@ import { FlavorSlider } from "@/components/feature/FlavorSlider";
 import { VisualMoodSelector } from "@/components/feature/VisualMoodSelector";
 
 import { useSearchParams } from "next/navigation";
+import localCocktailsData from "@/data/cocktails.json";
+import { Cocktail } from "@/types";
+import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 
 export function DrinkingManForm() {
   const t = useTranslations("DrinkingMan");
@@ -82,6 +86,51 @@ export function DrinkingManForm() {
 
   const [visualImages, setVisualImages] = useState<string[]>([]);
   const [isLoadingImages, setIsLoadingImages] = useState(false);
+  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([]);
+  const [ingredientSearch, setIngredientSearch] = useState("");
+  const [ingredientDropdownOpen, setIngredientDropdownOpen] = useState(false);
+
+  const [dbIngredients, setDbIngredients] = useState<
+    { id: string; name: string }[]
+  >([]);
+
+  // Fetch ingredients from DB on mount
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        const res = await fetch("/api/ingredients");
+        const data = await res.json();
+        if (!data.error) {
+          setDbIngredients(data);
+        }
+      } catch (e) {
+        console.error("Error fetching ingredients:", e);
+      }
+    };
+    fetchIngredients();
+  }, []);
+
+  // Use DB ingredients if available, else fallback to local derive
+  const allIngredients = useMemo(() => {
+    if (dbIngredients.length > 0) {
+      return dbIngredients.map((i) => i.name).sort();
+    }
+    const localCocktails = localCocktailsData as unknown as Cocktail[];
+    const set = new Set<string>();
+    localCocktails.forEach((c) => {
+      for (let i = 1; i <= 15; i++) {
+        const ing = c[`strIngredient${i}` as keyof Cocktail] as string;
+        if (ing && ing.trim()) set.add(ing.trim());
+      }
+    });
+    return [...set].sort();
+  }, [dbIngredients]);
+
+  const filteredIngredients = allIngredients.filter(
+    (ing: string) =>
+      ing.toLowerCase().includes(ingredientSearch.toLowerCase()) &&
+      !selectedIngredients.includes(ing),
+  );
 
   useEffect(() => {
     if (response) {
@@ -177,18 +226,23 @@ export function DrinkingManForm() {
     setResponse(null);
 
     try {
-      // Create a temporary data object with the mapped flavors
       const submissionData = {
         ...formData,
         flavorProfile: getMappedFlavors(),
       };
 
-      console.log("Submitting:", submissionData);
+      console.log(
+        "Submitting to Drinking Man:",
+        JSON.stringify(submissionData, null, 2),
+      );
+      console.log("Selected Ingredients:", selectedIngredients);
+      console.log("Unavailable Ingredients:", unavailableIngredients);
 
       const result = await askDrinkingMan(
         submissionData,
         locale,
         unavailableIngredients,
+        selectedIngredients,
       );
 
       if (!result) {
@@ -196,6 +250,9 @@ export function DrinkingManForm() {
           "Sorry, The Drinking Man is taking a nap (API Error). Please try again.",
         );
         console.error("API returned null");
+      } else if (result.error) {
+        alert(`Drinking Man Error: ${result.error}`);
+        console.error("API returned error:", result.error);
       } else {
         setResponse(result);
       }
@@ -209,16 +266,18 @@ export function DrinkingManForm() {
 
   return (
     <section
-      className="py-20 bg-background relative overflow-hidden"
+      className="py-20 bg-transparent relative overflow-hidden"
       id="drinkingman"
     >
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="flex flex-col items-center text-center mb-12">
           {/* Badge removed as per user request */}
-          <h2 className="text-3xl md:text-5xl font-bold font-secondary text-foreground mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold font-secondary text-white mb-4 drop-shadow-lg">
             {t("title")}
           </h2>
-          <p className="text-muted-foreground max-w-2xl">{t("subtitle")}</p>
+          <p className="text-white/60 max-w-2xl drop-shadow-md">
+            {t("subtitle")}
+          </p>
 
           {barName && (
             <div className="mt-4 bg-primary/10 border border-primary/20 text-primary px-4 py-2 rounded-full text-sm font-medium flex items-center animate-in fade-in slide-in-from-top-4">
@@ -228,354 +287,429 @@ export function DrinkingManForm() {
           )}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-          <Card className="bg-card shadow-xl border-primary/20">
-            <CardHeader>
-              <CardTitle className="flex items-center text-2xl font-secondary text-card-foreground">
-                <Bot className="mr-2 h-6 w-6 text-primary" />
-                {t("preferences")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-secondary/80 mb-2">
-                    {t("baseSpirit")}
-                  </label>
-                  <Select
-                    onValueChange={(val) =>
-                      setFormData({ ...formData, baseSpirit: val })
-                    }
-                    required
-                  >
-                    <SelectTrigger
-                      className="!bg-white !text-[#5C3A2E] !border-[#5C3A2E]/50 shadow-sm font-medium"
-                      style={{ backgroundColor: "white", color: "#5C3A2E" }}
-                    >
-                      <SelectValue placeholder={t("placeholderSpirit")} />
-                    </SelectTrigger>
-                    <SelectContent
-                      className="!bg-white !text-[#5C3A2E] !border-[#5C3A2E]/50"
-                      style={{ backgroundColor: "white", color: "#5C3A2E" }}
-                    >
-                      {[
-                        "Vodka",
-                        "Gin",
-                        "Rum",
-                        "Tequila",
-                        "Whiskey",
-                        "Mezcal",
-                        "Brandy",
-                        "None",
-                      ].map((spirit) => (
-                        <SelectItem
-                          key={spirit}
-                          value={spirit}
-                          className="!text-[#5C3A2E] focus:!bg-[#5C3A2E]/10 focus:!text-[#5C3A2E] cursor-pointer font-medium"
-                          style={{ color: "#5C3A2E" }}
+        <div className="max-w-3xl mx-auto">
+          {!response ? (
+            <Card className="bg-transparent shadow-none border-none">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-center text-3xl font-secondary text-white">
+                  <Bot className="mr-3 h-8 w-8 text-primary" />
+                  {t("preferences")}
+                </CardTitle>
+                <p className="text-center text-white/80">
+                  {t("preferencesDesc")}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-8">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-bold text-white mb-2">
+                          {t("baseSpirit")}
+                        </label>
+                        <Select
+                          onValueChange={(val) =>
+                            setFormData({ ...formData, baseSpirit: val })
+                          }
+                          required
+                          value={formData.baseSpirit}
                         >
-                          {spirit}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                          <SelectTrigger className="w-full bg-white text-[#5C3A2E] border-[#5C3A2E]/30 shadow-sm font-medium h-12">
+                            <SelectValue placeholder={t("placeholderSpirit")} />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white text-[#5C3A2E]">
+                            {[
+                              "Vodka",
+                              "Gin",
+                              "Rum",
+                              "Tequila",
+                              "Whiskey",
+                              "Mezcal",
+                              "Brandy",
+                              "None",
+                            ].map((spirit) => (
+                              <SelectItem
+                                key={spirit}
+                                value={spirit}
+                                className="text-[#5C3A2E] focus:bg-[#5C3A2E]/10 cursor-pointer"
+                              >
+                                {spirit}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-[#5C3A2E] mb-4">
-                    {t("flavorProfile")}
-                  </label>
-                  <div className="space-y-6 bg-secondary/5 p-4 rounded-xl border border-secondary/10">
-                    <FlavorSlider
-                      labelLeft={t("sliders.sweet")}
-                      labelRight={t("sliders.bitter")}
-                      value={sliderValues.sweetBitter}
-                      onChange={(val) =>
-                        setSliderValues({ ...sliderValues, sweetBitter: val })
-                      }
-                    />
-                    <FlavorSlider
-                      labelLeft={t("sliders.smooth")}
-                      labelRight={t("sliders.strong")}
-                      value={sliderValues.smoothStrong}
-                      onChange={(val) =>
-                        setSliderValues({ ...sliderValues, smoothStrong: val })
-                      }
-                    />
-                    <FlavorSlider
-                      labelLeft={t("sliders.refreshing")}
-                      labelRight={t("sliders.heavy")}
-                      value={sliderValues.refreshingHeavy}
-                      onChange={(val) =>
-                        setSliderValues({
-                          ...sliderValues,
-                          refreshingHeavy: val,
-                        })
+                      <div>
+                        <label className="block text-sm font-bold text-white mb-2">
+                          {t("occasion")}
+                        </label>
+                        <Select
+                          onValueChange={(val) =>
+                            setFormData({ ...formData, occasion: val })
+                          }
+                          required
+                          value={formData.occasion}
+                        >
+                          <SelectTrigger className="w-full bg-white text-[#5C3A2E] border-[#5C3A2E]/30 shadow-sm font-medium h-12">
+                            <SelectValue
+                              placeholder={t("placeholderOccasion")}
+                            />
+                          </SelectTrigger>
+                          <SelectContent className="bg-white text-[#5C3A2E]">
+                            {[
+                              "Date Night",
+                              "Party",
+                              "Relaxing",
+                              "Business",
+                              "Celebration",
+                              "Casual",
+                            ].map((o) => (
+                              <SelectItem
+                                key={o}
+                                value={o}
+                                className="text-[#5C3A2E] focus:bg-[#5C3A2E]/10 cursor-pointer"
+                              >
+                                {t(`occasions.${o}`)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-white mb-4">
+                        {t("flavorProfile")}
+                      </label>
+                      <div className="space-y-6 bg-secondary/5 p-4 rounded-xl border border-secondary/10">
+                        <FlavorSlider
+                          labelLeft={t("sliders.sweet")}
+                          labelRight={t("sliders.bitter")}
+                          value={sliderValues.sweetBitter}
+                          onChange={(val) =>
+                            setSliderValues({
+                              ...sliderValues,
+                              sweetBitter: val,
+                            })
+                          }
+                        />
+                        <FlavorSlider
+                          labelLeft={t("sliders.smooth")}
+                          labelRight={t("sliders.strong")}
+                          value={sliderValues.smoothStrong}
+                          onChange={(val) =>
+                            setSliderValues({
+                              ...sliderValues,
+                              smoothStrong: val,
+                            })
+                          }
+                        />
+                        <FlavorSlider
+                          labelLeft={t("sliders.refreshing")}
+                          labelRight={t("sliders.heavy")}
+                          value={sliderValues.refreshingHeavy}
+                          onChange={(val) =>
+                            setSliderValues({
+                              ...sliderValues,
+                              refreshingHeavy: val,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-white mb-4 text-center">
+                      {t("mood")}
+                    </label>
+                    <VisualMoodSelector
+                      options={[
+                        {
+                          id: "Happy",
+                          label: t("moods.Happy"),
+                          emoji: "😊",
+                          color: "bg-yellow-100",
+                        },
+                        {
+                          id: "Melancholic",
+                          label: t("moods.Melancholic"),
+                          emoji: "🌧️",
+                          color: "bg-blue-100",
+                        },
+                        {
+                          id: "Adventurous",
+                          label: t("moods.Adventurous"),
+                          emoji: "🚀",
+                          color: "bg-red-100",
+                        },
+                        {
+                          id: "Tired",
+                          label: t("moods.Tired"),
+                          emoji: "😴",
+                          color: "bg-gray-100",
+                        },
+                        {
+                          id: "Energetic",
+                          label: t("moods.Energetic"),
+                          emoji: "⚡",
+                          color: "bg-orange-100",
+                        },
+                        {
+                          id: "Romantic",
+                          label: t("moods.Romantic"),
+                          emoji: "🌹",
+                          color: "bg-pink-100",
+                        },
+                      ]}
+                      selectedMood={formData.mood}
+                      onSelect={(moodId) =>
+                        setFormData({ ...formData, mood: moodId })
                       }
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-[#5C3A2E] mb-2">
-                    {t("occasion")}
-                  </label>
-                  <Select
-                    onValueChange={(val) =>
-                      setFormData({ ...formData, occasion: val })
-                    }
-                    required
-                  >
-                    <SelectTrigger
-                      className="!bg-white !text-[#5C3A2E] !border-[#5C3A2E]/50 shadow-sm font-medium"
-                      style={{ backgroundColor: "white", color: "#5C3A2E" }}
-                    >
-                      <SelectValue placeholder={t("placeholderOccasion")} />
-                    </SelectTrigger>
-                    <SelectContent
-                      className="!bg-white !text-[#5C3A2E] !border-[#5C3A2E]/50"
-                      style={{ backgroundColor: "white", color: "#5C3A2E" }}
-                    >
-                      {[
-                        "Date Night",
-                        "Party",
-                        "Relaxing",
-                        "Business",
-                        "Celebration",
-                        "Casual",
-                      ].map((o) => (
-                        <SelectItem
-                          key={o}
-                          value={o}
-                          className="!text-[#5C3A2E] focus:!bg-[#5C3A2E]/10 focus:!text-[#5C3A2E] cursor-pointer font-medium"
-                          style={{ color: "#5C3A2E" }}
-                        >
-                          {t(`occasions.${o}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[#5C3A2E] mb-4">
-                    {t("mood")}
-                  </label>
-                  <VisualMoodSelector
-                    options={[
-                      {
-                        id: "Happy",
-                        label: t("moods.Happy"),
-                        emoji: "😊",
-                        color: "bg-yellow-100",
-                      },
-                      {
-                        id: "Melancholic",
-                        label: t("moods.Melancholic"),
-                        emoji: "🌧️",
-                        color: "bg-blue-100",
-                      },
-                      {
-                        id: "Adventurous",
-                        label: t("moods.Adventurous"),
-                        emoji: "🚀",
-                        color: "bg-red-100",
-                      },
-                      {
-                        id: "Tired",
-                        label: t("moods.Tired"),
-                        emoji: "😴",
-                        color: "bg-gray-100",
-                      },
-                      {
-                        id: "Energetic",
-                        label: t("moods.Energetic"),
-                        emoji: "⚡",
-                        color: "bg-orange-100",
-                      },
-                      {
-                        id: "Romantic",
-                        label: t("moods.Romantic"),
-                        emoji: "🌹",
-                        color: "bg-pink-100",
-                      },
-                    ]}
-                    selectedMood={formData.mood}
-                    onSelect={(moodId) =>
-                      setFormData({ ...formData, mood: moodId })
-                    }
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-lg py-6"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      {t("mixing")}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      {t("submit")}
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <div className="flex items-center justify-center min-h-[400px]">
-            <AnimatePresence mode="wait">
-              {response ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="w-full"
-                >
-                  <Card className="border-primary bg-card/90 shadow-2xl overflow-hidden relative">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
-                    <CardHeader className="text-center pb-2">
-                      <div className="mx-auto bg-primary/20 p-3 rounded-full w-fit mb-4">
-                        <Wine className="w-8 h-8 text-primary" />
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className="mx-auto mb-2 border-primary/50 text-secondary"
-                      >
-                        {t("suggests")}
-                      </Badge>
-                      <CardTitle className="text-3xl font-secondary text-primary">
-                        {response.name}
-                      </CardTitle>
-                    </CardHeader>
-
-                    {/* Dynamic Images Section */}
-                    {visualImages.length > 0 && (
-                      <div className="px-6 pb-2">
-                        {/* Mobile Carousel */}
-                        <div className="md:hidden">
-                          <Carousel className="w-full max-w-xs mx-auto">
-                            <CarouselContent>
-                              {visualImages.map((img, index) => (
-                                <CarouselItem key={index}>
-                                  <div className="p-1">
-                                    <div className="overflow-hidden rounded-xl aspect-square relative shadow-md border-2 border-primary/20">
-                                      <Image
-                                        src={img}
-                                        alt={`Cocktail visual ${index + 1}`}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  </div>
-                                </CarouselItem>
-                              ))}
-                            </CarouselContent>
-                            <CarouselPrevious className="left-2" />
-                            <CarouselNext className="right-2" />
-                          </Carousel>
-                        </div>
-
-                        {/* Desktop Grid */}
-                        <div className="hidden md:grid grid-cols-4 gap-4 mt-4">
-                          {visualImages.map((img, index) => (
-                            <div
-                              key={index}
-                              className="overflow-hidden rounded-xl aspect-square relative shadow-md border-2 border-primary/20 hover:scale-105 transition-transform duration-300"
+                  {/* Ingredient Multi-Select */}
+                  <div>
+                    <label className="block text-sm font-bold text-white mb-4 text-center">
+                      {t("ingredientsLabel")}
+                    </label>
+                    <div className="bg-secondary/5 p-4 rounded-xl border border-secondary/10">
+                      {selectedIngredients.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {selectedIngredients.map((ing) => (
+                            <Badge
+                              key={ing}
+                              variant="outline"
+                              className="text-white border-white/40 bg-white/10 cursor-pointer hover:bg-red-500/30 transition-colors"
+                              onClick={() =>
+                                setSelectedIngredients((prev) =>
+                                  prev.filter((i) => i !== ing),
+                                )
+                              }
                             >
-                              <Image
-                                src={img}
-                                alt={`Cocktail visual ${index + 1}`}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
+                              {ing}
+                              <X className="ml-1 h-3 w-3" />
+                            </Badge>
                           ))}
                         </div>
+                      )}
+                      <div className="relative">
+                        <Input
+                          placeholder={t("ingredientSearchPlaceholder")}
+                          value={ingredientSearch}
+                          onChange={(e) => setIngredientSearch(e.target.value)}
+                          onFocus={() => setIngredientDropdownOpen(true)}
+                          onBlur={() =>
+                            setTimeout(
+                              () => setIngredientDropdownOpen(false),
+                              200,
+                            )
+                          }
+                          className="!bg-white/10 !border-white/20 !text-white placeholder:!text-white/40 h-10"
+                          style={{
+                            backgroundColor: "rgba(255,255,255,0.1)",
+                            color: "white",
+                          }}
+                        />
+                        {ingredientDropdownOpen &&
+                          filteredIngredients.length > 0 && (
+                            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-[#2a1f1a] border border-white/20 rounded-lg max-h-48 overflow-y-auto shadow-xl">
+                              {filteredIngredients.slice(0, 30).map((ing) => (
+                                <button
+                                  key={ing}
+                                  type="button"
+                                  className="w-full text-left px-4 py-2 text-white/80 hover:bg-white/10 hover:text-white text-sm transition-colors"
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={() => {
+                                    setSelectedIngredients((prev: string[]) => [
+                                      ...prev,
+                                      ing,
+                                    ]);
+                                    setIngredientSearch("");
+                                  }}
+                                >
+                                  {ing}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-xl py-8 rounded-2xl shadow-xl transition-all hover:scale-[1.02]"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-3 h-6 w-6 animate-spin" />
+                        {t("mixing")}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-3 h-6 w-6" />
+                        {t("submit")}
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full"
+            >
+              <Card className="border-none bg-transparent shadow-none overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+                <CardHeader className="text-center pb-2 relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute left-4 top-4 text-white/70 hover:text-white hover:bg-white/10"
+                    onClick={() => setResponse(null)}
+                  >
+                    ← {t("back")}
+                  </Button>
+                  <div className="mx-auto bg-white/10 p-3 rounded-full w-fit mb-4 mt-8 backdrop-blur-md">
+                    <Wine className="w-8 h-8 text-white" />
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="mx-auto mb-2 border-white/30 text-white/80"
+                  >
+                    {t("suggests")}
+                  </Badge>
+                  <CardTitle className="text-4xl font-secondary text-white drop-shadow-md">
+                    {response.name}
+                  </CardTitle>
+                </CardHeader>
+
+                {/* Dynamic Images Section */}
+                {visualImages.length > 0 && (
+                  <div className="px-6 pb-2">
+                    {/* Desktop Grid */}
+                    <div className="hidden md:grid grid-cols-4 gap-4 mt-4">
+                      {visualImages.map((img, index) => (
+                        <div
+                          key={index}
+                          className="overflow-hidden rounded-xl aspect-square relative shadow-lg border border-white/10 hover:scale-105 transition-transform duration-300"
+                        >
+                          <Image
+                            src={img}
+                            alt={`Cocktail visual ${index + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    {/* Mobile Carousel */}
+                    <div className="md:hidden">
+                      <Carousel className="w-full max-w-xs mx-auto">
+                        <CarouselContent>
+                          {visualImages.map((img, index) => (
+                            <CarouselItem key={index}>
+                              <div className="p-1">
+                                <div className="overflow-hidden rounded-xl aspect-square relative shadow-lg border border-white/10">
+                                  <Image
+                                    src={img}
+                                    alt={`Cocktail visual ${index + 1}`}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              </div>
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        <CarouselPrevious className="left-2 bg-black/20 text-white border-none" />
+                        <CarouselNext className="right-2 bg-black/20 text-white border-none" />
+                      </Carousel>
+                    </div>
+                  </div>
+                )}
+
+                <CardContent className="space-y-6 pt-4">
+                  <div className="bg-white/5 p-6 rounded-2xl italic text-center text-white/90 border border-white/10 backdrop-blur-sm shadow-sm">
+                    "{response.description}"
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div className="bg-white/5 p-5 rounded-xl border border-white/5">
+                      <h4 className="font-bold text-white mb-3 text-lg flex items-center justify-center md:justify-start border-b border-white/10 pb-2">
+                        {t("ingredients")}
+                      </h4>
+                      <ul className="list-disc pl-5 space-y-2 text-sm text-white/80">
+                        {response.ingredients.map((ing, i) => (
+                          <li key={i} className="leading-relaxed">
+                            {ing}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="bg-white/5 p-5 rounded-xl border border-white/5">
+                      <h4 className="font-bold text-white mb-3 text-lg text-center md:text-left border-b border-white/10 pb-2">
+                        {t("instructions")}
+                      </h4>
+                      <div className="text-sm text-white/80 leading-relaxed text-center md:text-left space-y-2">
+                        {response.instructions
+                          ?.split(".")
+                          .filter((step) => step.trim().length > 0)
+                          .map((step, idx) => (
+                            <p key={idx}>- {step.trim()}.</p>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6 pt-6 border-t border-white/10">
+                    <div>
+                      <h4 className="font-semibold text-white mb-2 text-base text-center uppercase tracking-wider opacity-80">
+                        {t("whyItFits")}
+                      </h4>
+                      <p className="text-base text-white/70 italic text-center max-w-2xl mx-auto">
+                        {response.whyItFits}
+                      </p>
+                    </div>
+
+                    {response.history && (
+                      <div className="text-center">
+                        <h4 className="font-semibold text-white mb-2 text-base uppercase tracking-wider opacity-80">
+                          {t("history")}
+                        </h4>
+                        <p className="text-base text-white/70 max-w-2xl mx-auto">
+                          {response.history}
+                        </p>
                       </div>
                     )}
 
-                    <CardContent className="space-y-6 pt-4">
-                      <div className="bg-secondary/20 p-4 rounded-lg italic text-center text-card-foreground/90 border border-primary/10">
-                        "{response.description}"
+                    {response.funFact && (
+                      <div className="text-center">
+                        <h4 className="font-semibold text-white mb-2 text-base uppercase tracking-wider opacity-80">
+                          {t("funFact")}
+                        </h4>
+                        <p className="text-base text-white/70 max-w-2xl mx-auto">
+                          {response.funFact}
+                        </p>
                       </div>
-
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="font-semibold text-primary mb-2 flex items-center">
-                            {t("ingredients")}
-                          </h4>
-                          <ul className="list-disc pl-4 space-y-1 text-sm text-card-foreground/80">
-                            {response.ingredients.map((ing, i) => (
-                              <li key={i}>{ing}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-primary mb-2">
-                            {t("instructions")}
-                          </h4>
-                          <p className="text-sm text-card-foreground/80 leading-relaxed">
-                            {response.instructions}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4 pt-4 border-t border-border">
-                        <div>
-                          <h4 className="font-semibold text-primary mb-2 text-sm">
-                            {t("whyItFits")}
-                          </h4>
-                          <p className="text-sm text-card-foreground/70 italic">
-                            {response.whyItFits}
-                          </p>
-                        </div>
-
-                        {response.history && (
-                          <div>
-                            <h4 className="font-semibold text-primary mb-2 text-sm">
-                              {t("history")}
-                            </h4>
-                            <p className="text-sm text-card-foreground/70">
-                              {response.history}
-                            </p>
-                          </div>
-                        )}
-
-                        {response.funFact && (
-                          <div>
-                            <h4 className="font-semibold text-primary mb-2 text-sm">
-                              {t("funFact")}
-                            </h4>
-                            <p className="text-sm text-card-foreground/70">
-                              {response.funFact}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-center text-muted-foreground p-8"
-                >
-                  <div className="w-24 h-24 bg-primary/5 rounded-full mx-auto mb-6 flex items-center justify-center">
-                    <Sparkles className="w-10 h-10 text-primary/40" />
+                    )}
                   </div>
-                  <h3 className="text-xl font-medium mb-2">Ready to Serve</h3>
-                  <p className="max-w-md mx-auto">{t("initialPrompt")}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  <Button
+                    onClick={() => setResponse(null)}
+                    className="w-full mt-8 bg-white/10 text-white hover:bg-white/20 border border-white/20 backdrop-blur-md py-6 text-lg rounded-xl transition-all hover:scale-[1.01]"
+                  >
+                    {t("tryNew")}
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
         </div>
       </div>
     </section>

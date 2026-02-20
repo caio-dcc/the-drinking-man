@@ -125,7 +125,8 @@ export interface DrinkingManResponse {
   whyItFits: string;
   history?: string;
   funFact?: string;
-  visualMatch?: string; // e.g. "Blue Lagoon" if the user wants something blue
+  visualMatch?: string; 
+  error?: string; // Added for debugging
 }
 
 export interface MoreCocktailInfo {

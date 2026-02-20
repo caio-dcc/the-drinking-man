@@ -225,7 +225,7 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
         >
           <ul
             ref={navRef}
-            className="flex gap-4 list-none p-2 m-0 relative z-[3] bg-background/50 rounded-full border border-primary/20 backdrop-blur-sm"
+            className="flex gap-4 list-none p-2 m-0 relative z-[3] bg-transparent rounded-full backdrop-blur-sm"
             style={{
               color: "#F0F4EF",
             }}
@@ -241,7 +241,8 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
                   href={item.href}
                   onClick={(e) => handleClick(e, index)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="outline-none py-2 px-6 inline-block text-sm font-medium"
+                  className="outline-none py-2 px-6 inline-block text-lg font-medium tracking-wide"
+                  style={{ fontFamily: "var(--font-sans)" }}
                 >
                   {item.label}
                 </a>

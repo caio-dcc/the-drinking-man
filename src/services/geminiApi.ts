@@ -2,6 +2,15 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { DrinkingManPreferences, DrinkingManResponse } from '@/types';
+import fs from 'fs';
+import path from 'path';
+
+const LOG_FILE = path.join(process.cwd(), 'debug_gemini.log');
+
+function logToFile(message: string) {
+  const timestamp = new Date().toISOString();
+  fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
+}
 
 // Initialize Gemini API
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
@@ -21,13 +30,18 @@ const GENERATION_CONFIG = {
 export async function askDrinkingMan(
   preferences: DrinkingManPreferences,
   locale: string = 'en',
-  unavailableIngredients: string[] = [] // Optional: ingredients to EXCLUDE
+  unavailableIngredients: string[] = [],
+  desiredIngredients: string[] = []
 ): Promise<DrinkingManResponse | null> {
-  console.log(`[askDrinkingMan] Invoked with locale: ${locale}, blacklist: ${unavailableIngredients.length} items`);
+  const logMsg = `[askDrinkingMan] Invoked. locale: ${locale}, blacklist: ${unavailableIngredients.length}, desired: ${desiredIngredients.length}`;
+  console.log(logMsg);
+  logToFile(logMsg);
   
   if (!apiKey) {
-    console.error('[askDrinkingMan] Gemini API Key is missing');
-    return null;
+    const err = '[askDrinkingMan] Gemini API Key is missing';
+    console.error(err);
+    logToFile(err);
+    return { error: err } as any;
   }
 
   const languageMap: Record<string, string> = {
@@ -36,10 +50,8 @@ export async function askDrinkingMan(
     'en': 'English'
   };
 
-  const t = locale === 'pt' ? 'portuguese' : locale === 'es' ? 'spanish' : 'english';
-  // Use robust mapping or fallback
   const targetLanguage = languageMap[locale] || 'English'; 
-  console.log(`[askDrinkingMan] Target Language: ${targetLanguage}`);
+  logToFile(`[askDrinkingMan] Target Language: ${targetLanguage}`);
 
   // Construct the inventory constraint string if applicable
   const inventoryConstraint = unavailableIngredients.length > 0
@@ -59,6 +71,7 @@ export async function askDrinkingMan(
     - Language: ${targetLanguage}
 
     ${inventoryConstraint}
+    ${desiredIngredients.length > 0 ? `The user SPECIFICALLY wants these ingredients to be included in the cocktail: ${desiredIngredients.join(", ")}. Try to incorporate them.` : ""}
 
     Create a unique cocktail recipe based on these preferences.
     Return ONLY a JSON object with this structure:
@@ -83,17 +96,47 @@ export async function askDrinkingMan(
     Do not include markdown formatting code blocks. Just raw JSON.
   `;
 
+    logToFile('[askDrinkingMan] Sending prompt to Gemini');
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       generationConfig: GENERATION_CONFIG,
     });
+    
     const text = result.response.text();
-    const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    logToFile(`[askDrinkingMan] Raw response received: ${text}`);
 
-    return JSON.parse(cleanText) as DrinkingManResponse;
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    return null;
+    // Robust JSON extraction
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      const err = '[askDrinkingMan] No JSON found in response';
+      logToFile(err);
+      return { error: err } as any;
+    }
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      logToFile(`[askDrinkingMan] Success parsing JSON: ${parsed.name}`);
+      return parsed as DrinkingManResponse;
+    } catch (parseError: any) {
+      const err = `[askDrinkingMan] JSON Parse Error: ${parseError.message}`;
+      logToFile(err);
+      // Fallback for common issues like trailing commas or weird characters
+      const cleaned = jsonMatch[0]
+        .replace(/,\s*\}/g, '}')
+        .replace(/,\s*\]/g, ']');
+      try {
+        return JSON.parse(cleaned) as DrinkingManResponse;
+      } catch (e: any) {
+        const finalErr = `[askDrinkingMan] Final Cleanup Parse Error: ${e.message}`;
+        logToFile(finalErr);
+        return { error: finalErr } as any;
+      }
+    }
+  } catch (error: any) {
+    const err = `[askDrinkingMan] Gemini API Error: ${error.message}`;
+    console.error(err);
+    logToFile(err);
+    return { error: err } as any;
   }
 }
 

@@ -1,32 +1,44 @@
 {
   "Navigation": {
     "home": "Home",
-    "cocktails": "Cocktails",
+    "cocktails": "Cocktail Menu",
     "about": "About",
-    "drinkingman": "DrinkingMan"
+    "drinkingman": "DrinkingMan",
+    "suggestion": "Suggestion",
+    "articles": "Articles",
+    "myBar": "My Bar"
   },
   "Hero": {
-    "title": "Crafting the Perfect Sip",
+    "title": "The Intelligent Drink Library",
     "subtitle": "Explore a world of refined flavors, curated by AI and tradition.",
     "cta_primary": "Ask DrinkingMan",
-    "cta_secondary": "Browse Cocktails"
+    "cta_secondary": "Browse Cocktails",
+    "drinkingManDescription1": "The Drinking Man is a web application designed to facilitate the daily life of the Barman/Mixologist, where it is possible to register all ingredients, spirits, drinks and food, and draw a service map based on this inventory, using artificial intelligence to articulate pairing strategies, suggestions, logistics in addition to the large catalog of drinks.",
+    "drinkingManDescription2": ""
   },
   "About": {
     "badge": "Professional Profile",
-    "title": "The Mixologist",
+    "title": "About the Developer",
     "description": "Passionate about the alchemy of spirits and the art of hospitality. Blending classic techniques with modern innovation to create unforgettable liquid experiences.",
     "languages": "Languages",
     "certifications": "Certifications",
     "philosophy": "Philosophy",
     "english": "English",
-    "spanish": "Spanish",
     "portuguese": "Portuguese",
     "advanced": "Advanced",
-    "basic": "Basic",
     "native": "Native",
     "quote": "The problem with the world is that everyone is a few drinks behind.\nStay with the beer.\nBeer is continuous blood.\nA continuous lover.\n\n- Charles Bukowski",
     "bartending": "Professional Bartending",
-    "foundation": "Spirits Foundation"
+    "foundation": "Spirits Foundation",
+    "webDevDegree": "Web Development (2023)",
+    "anhanguera": "Anhanguera Educacional",
+    "frontendSpecialist": "Frontend Specialist",
+    "diageoSimpleCocktails": "Simple Cocktail Service",
+    "diageoFoodDrinks": "Food & Drinks",
+    "diageoServingRecommending": "Serving & Recommending",
+    "diageoLeadershipNegotiation": "Leadership & Negotiation",
+    "frontendDescription": "Responsible for developing fleet management, supplier, and pharmaceutical product systems",
+    "aluraCert": "Certified in TypeScript, Angular & React — Alura"
   },
   "Search": {
     "placeholder": "Search cocktails...",
@@ -39,7 +51,8 @@
     "shot": "Shot",
     "alcoholic": "Alcoholic",
     "non_alcoholic": "Non Alcoholic",
-    "optional": "Optional Alcohol"
+    "optional": "Optional Alcohol",
+    "ingredient": "Ingredient"
   },
   "Gallery": {
     "title": "Cocktail Library",
@@ -47,7 +60,8 @@
     "tryAgain": "Try a different search term or filter.",
     "back": "Back to Gallery",
     "search": "Search",
-    "filter": "Filter"
+    "filter": "Filter",
+    "clearAll": "Clear all"
   },
   "Details": {
     "tale": "The Tale of the Drink",
@@ -124,7 +138,7 @@
     "flavorProfile": "Flavor Profile",
     "occasion": "Occasion",
     "mood": "Current Mood",
-    "submit": "Ask DrinkingMan",
+    "submit": "Request Suggestion",
     "mixing": "Mixing...",
     "suggests": "DrinkingMan Suggests",
     "ingredients": "Ingredients",
@@ -137,6 +151,8 @@
     "placeholderMood": "Select Mood",
     "funFact": "Fun Fact",
     "history": "History",
+    "tryNew": "Try New Combination",
+    "back": "Back",
     "initialPrompt": "I am ready to serve. Tell me your preferences and I will craft the perfect drink for you.",
     "flavors": {
       "Sweet": "Sweet",
@@ -169,7 +185,14 @@
       "strong": "Strong",
       "refreshing": "Refreshing",
       "heavy": "Heavy"
-    }
+    },
+    "ingredientsLabel": "Desired ingredients (optional)",
+    "ingredientSearchPlaceholder": "Search ingredient..."
+  },
+  "Articles": {
+    "title": "Articles",
+    "subtitle": "Explore the world of mixology, spirits history and bar management tips.",
+    "empty": "No articles published yet. Check back soon!"
   },
   "Common": {
     "loading": "Loading..."

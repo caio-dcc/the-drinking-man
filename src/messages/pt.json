@@ -1,32 +1,44 @@
 {
   "Navigation": {
     "home": "Início",
-    "cocktails": "Coquetéis",
+    "cocktails": "Cardápio de Coquetéis",
     "about": "Sobre",
-    "drinkingman": "DrinkingMan"
+    "drinkingman": "DrinkingMan",
+    "suggestion": "Sugestão",
+    "articles": "Artigos",
+    "myBar": "Meu bar"
   },
   "Hero": {
-    "title": "Criando goles perfeitos",
+    "title": "A biblioteca inteligente de drinks",
     "subtitle": "Explore um mundo de sabores refinados, curados por IA e tradição.",
     "cta_primary": "Consultar DrinkingMan",
-    "cta_secondary": "Explorar Coquetéis"
+    "cta_secondary": "Explorar Coquetéis",
+    "drinkingManDescription1": "O Drinking Man é uma aplicação web feita para facilitar o dia a dia do Barman/Mixologista, aqui é possível registrar todos os ingredientes, destilados, bebidas e comidas, e traçar um mapa de serviço com base neste inventário, utilizando a inteligência artificial para articular estratégias de harmonização, sugestões, logística além do grande catálogo de bebidas.",
+    "drinkingManDescription2": ""
   },
   "About": {
     "badge": "Perfil Profissional",
-    "title": "O Mixologista",
+    "title": "Sobre o desenvolvedor",
     "description": "Apaixonado pela alquimia dos destilados e a arte da hospitalidade. Combinando técnicas clássicas com inovação moderna para criar experiências líquidas inesquecíveis.",
     "languages": "Idiomas",
     "certifications": "Certificações",
     "philosophy": "Filosofia",
     "english": "Inglês",
-    "spanish": "Espanhol",
     "portuguese": "Português",
     "advanced": "Avançado",
-    "basic": "Básico",
     "native": "Nativo",
     "quote": "O problema com o mundo é que todos estão alguns drinks atrasados.\nFique com a cerveja.\nA cerveja é sangue contínuo.\nUma amante contínua.\n\n- Charles Bukowski",
     "bartending": "Bartending Profissional",
-    "foundation": "Fundação em Destilados"
+    "foundation": "Fundação em Destilados",
+    "webDevDegree": "Desenvolvimento Web (2023)",
+    "anhanguera": "Anhanguera Educacional",
+    "frontendSpecialist": "Especialista em Frontend",
+    "diageoSimpleCocktails": "Serviço de Coquetéis Simples",
+    "diageoFoodDrinks": "Bebidas com Comidas",
+    "diageoServingRecommending": "Servindo e Recomendando",
+    "diageoLeadershipNegotiation": "Liderança e Negociação",
+    "frontendDescription": "Responsável pelo desenvolvimento de sistemas de gestão de frotas, fornecedores e produtos farmacêuticos",
+    "aluraCert": "Certificado TypeScript, Angular e React — Alura"
   },
   "Search": {
     "placeholder": "Pesquisar coquetéis...",
@@ -39,15 +51,17 @@
     "shot": "Dose",
     "alcoholic": "Alcoólico",
     "non_alcoholic": "Não Alcoólico",
-    "optional": "Álcool Opcional"
+    "optional": "Álcool Opcional",
+    "ingredient": "Ingrediente"
   },
   "Gallery": {
-    "title": "Biblioteca de Coquetéis",
+    "title": "Cardápio de Coquetéis",
     "notFound": "Nenhum coquetel encontrado com seus critérios.",
     "tryAgain": "Tente um termo de pesquisa ou filtro diferente.",
     "back": "Voltar para Galeria",
     "search": "Pesquisa",
-    "filter": "Filtro"
+    "filter": "Filtro",
+    "clearAll": "Limpar tudo"
   },
   "Details": {
     "tale": "O Conto da Bebida",
@@ -116,7 +130,7 @@
   },
   "DrinkingMan": {
     "badge": "Sommelier IA",
-    "title": "Conheça o DrinkingMan",
+    "title": "Conheça o sistema de sugestão do The Drinking Man",
     "subtitle": "Seu especialista pessoal em mixologia. Diga a ele o que você sente, e ele servirá uma história.",
     "preferences": "Preferências",
     "preferencesDesc": "Personalize sua experiência de bebida.",
@@ -124,7 +138,7 @@
     "flavorProfile": "Perfil de Sabor",
     "occasion": "Ocasião",
     "mood": "Humor Atual",
-    "submit": "Perguntar ao DrinkingMan",
+    "submit": "Solicitar Sugestão",
     "mixing": "Misturando...",
     "suggests": "DrinkingMan Sugere",
     "ingredients": "Ingredientes",
@@ -137,6 +151,8 @@
     "placeholderMood": "Selecione o humor",
     "funFact": "Observação",
     "history": "História",
+    "tryNew": "Tentar Nova Combinação",
+    "back": "Voltar",
     "initialPrompt": "Estou pronto para servir. Conte-me suas preferências e eu criarei a bebida perfeita para você.",
     "flavors": {
       "Sweet": "Doce",
@@ -169,7 +185,14 @@
       "strong": "Forte",
       "refreshing": "Refrescante",
       "heavy": "Encorpado"
-    }
+    },
+    "ingredientsLabel": "Ingredientes desejados (opcional)",
+    "ingredientSearchPlaceholder": "Buscar ingrediente..."
+  },
+  "Articles": {
+    "title": "Artigos",
+    "subtitle": "Explore o mundo da mixologia, história dos destilados e dicas de gestão de bar.",
+    "empty": "Nenhum artigo publicado ainda. Volte em breve!"
   },
   "Common": {
     "loading": "Carregando..."

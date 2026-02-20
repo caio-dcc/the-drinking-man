@@ -123,7 +123,11 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-image: url("/background-wood.jpg") !important;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
   }
   button, a, select, [role="button"], [role="combobox"], [type="button"], [type="submit"], [type="reset"], summary, details {
     @apply cursor-pointer;

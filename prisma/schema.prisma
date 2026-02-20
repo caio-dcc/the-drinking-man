@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  password String
+
+  createdBars Bar[] @relation("Creator")
+  sharedBars  Bar[] @relation("SharedBars")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Bar {
+  id        String @id @default(cuid())
+  name      String
+  creatorId String
+  creator   User   @relation("Creator", fields: [creatorId], references: [id])
+
+  sharedWith User[] @relation("SharedBars")
+
+  inventory InventoryItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cocktail {
+  id                       String  @id @default(cuid())
+  externalId               String? @unique // idDrink from API
+  name                     String
+  slug                     String  @unique
+  thumb                    String?
+  imageSource              String?
+  imageAttribution         String?
+  creativeCommonsConfirmed Boolean @default(false)
+
+  category  String
+  alcoholic String
+  glass     String
+
+  instructions   String
+  instructionsES String?
+  instructionsDE String?
+  instructionsFR String?
+  instructionsIT String?
+  instructionsPT String?
+
+  descriptionEN String?
+  descriptionPT String?
+  descriptionES String?
+
+  historyEN String? // Enriched
+  historyPT String? // Enriched
+  historyES String? // Enriched
+
+  funFactEN String? // Enriched
+  funFactPT String? // Enriched
+  funFactES String? // Enriched
+
+  ingredients CocktailIngredient[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ingredient {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  type        String? // Spirit, Mixer, Garnish, etc.
+  description String?
+  image       String?
+
+  cocktails CocktailIngredient[]
+  inventory InventoryItem[]
+}
+
+model CocktailIngredient {
+  id           String  @id @default(cuid())
+  cocktailId   String
+  ingredientId String
+  measure      String
+  measurePT    String?
+  measureML    Float?
+
+  cocktail   Cocktail   @relation(fields: [cocktailId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([cocktailId, ingredientId])
+}
+
+model InventoryItem {
+  id           String  @id @default(cuid())
+  barId        String
+  ingredientId String?
+  customName   String? // Name if not linked to a global ingredient
+  category     String? // "ingredient" | "food" | "drink"
+  quantity     Float?
+  unit         String?
+
+  bar        Bar         @relation(fields: [barId], references: [id])
+  ingredient Ingredient? @relation(fields: [ingredientId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Keeping Article just in case, but removing from UI
+model Article {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String
+  image     String?
+  author    String   @default("The Drinking Man")
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

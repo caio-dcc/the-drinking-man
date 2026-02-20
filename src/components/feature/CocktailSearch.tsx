@@ -15,12 +15,17 @@ import { useTranslations } from "next-intl";
 
 interface CocktailSearchProps {
   onSearch: (query: string) => void;
-  onFilterChange: (type: "category" | "alcoholic", value: string) => void;
+  onFilterChange: (
+    type: "category" | "alcoholic" | "ingredient",
+    value: string,
+  ) => void;
+  availableIngredients?: string[];
 }
 
 export function CocktailSearch({
   onSearch,
   onFilterChange,
+  availableIngredients = [],
 }: CocktailSearchProps) {
   const t = useTranslations("Search");
   const [query, setQuery] = useState("");
@@ -59,7 +64,7 @@ export function CocktailSearch({
           </SelectTrigger>
           <SelectContent className="!bg-background !text-foreground !border-primary/20">
             <SelectItem value="Cocktail">{t("cocktail")}</SelectItem>
-            <SelectItem value="Ordinary_Drink">{t("ordinary")}</SelectItem>
+            <SelectItem value="Ordinary Drink">{t("ordinary")}</SelectItem>
             <SelectItem value="Shake">{t("shake")}</SelectItem>
             <SelectItem value="Cocoa">{t("cocoa")}</SelectItem>
             <SelectItem value="Shot">{t("shot")}</SelectItem>
@@ -75,10 +80,28 @@ export function CocktailSearch({
           </SelectTrigger>
           <SelectContent className="!bg-background !text-foreground !border-primary/20">
             <SelectItem value="Alcoholic">{t("alcoholic")}</SelectItem>
-            <SelectItem value="Non_Alcoholic">{t("non_alcoholic")}</SelectItem>
-            <SelectItem value="Optional_Alcohol">{t("optional")}</SelectItem>
+            <SelectItem value="Non alcoholic">{t("non_alcoholic")}</SelectItem>
+            <SelectItem value="Optional alcohol">{t("optional")}</SelectItem>
           </SelectContent>
         </Select>
+
+        {availableIngredients.length > 0 && (
+          <Select onValueChange={(val) => onFilterChange("ingredient", val)}>
+            <SelectTrigger
+              className="w-full sm:w-[160px] !bg-transparent !border-white/30 !text-white shadow-none h-10 hover:!bg-white/5 transition-colors"
+              style={{ backgroundColor: "transparent", color: "white" }}
+            >
+              <SelectValue placeholder={t("ingredient")} />
+            </SelectTrigger>
+            <SelectContent className="!bg-background !text-foreground !border-primary/20 max-h-60">
+              {availableIngredients.map((ing) => (
+                <SelectItem key={ing} value={ing}>
+                  {ing}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
     </div>
   );

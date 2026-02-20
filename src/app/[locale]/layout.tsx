@@ -4,13 +4,14 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Navbar } from "@/components/shared/Navbar";
 import { AgeVerificationModal } from "@/components/feature/AgeVerificationModal";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default async function LocaleLayout({
   children,
   params,
 }: {
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
 
@@ -25,9 +26,11 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <AgeVerificationModal />
-      <Navbar />
-      {children}
+      <TooltipProvider>
+        <AgeVerificationModal />
+        <Navbar />
+        {children}
+      </TooltipProvider>
     </NextIntlClientProvider>
   );
 }

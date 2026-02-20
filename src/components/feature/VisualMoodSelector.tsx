@@ -31,19 +31,19 @@ export function VisualMoodSelector({
             whileTap={{ scale: 0.95 }}
             onClick={() => onSelect(option.id)}
             className={cn(
-              "relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200 cursor-pointer h-32",
+              "relative flex flex-col items-center justify-center p-4 rounded-xl transition-all duration-200 cursor-pointer h-32",
               isSelected
-                ? `border-primary bg-primary/10 shadow-[0_0_15px_rgba(255,255,255,0.1)]`
-                : "border-border/50 bg-card/50 hover:bg-card hover:border-border",
+                ? `bg-transparent shadow-none`
+                : "bg-transparent hover:bg-white/5",
             )}
           >
-            <span className="text-4xl mb-2 filter drop-shadow-md">
+            <span className="text-4xl mb-2 filter drop-shadow-sm">
               {option.emoji}
             </span>
             <span
               className={cn(
-                "text-sm font-medium tracking-wide",
-                isSelected ? "text-primary" : "text-muted-foreground",
+                "text-sm font-bold tracking-wide",
+                isSelected ? "text-primary" : "text-white",
               )}
             >
               {option.label}
@@ -51,7 +51,7 @@ export function VisualMoodSelector({
             {isSelected && (
               <motion.div
                 layoutId="mood-indicator"
-                className="absolute inset-0 rounded-xl border-2 border-primary pointer-events-none"
+                className="absolute inset-0 rounded-xl bg-white/5 pointer-events-none"
                 initial={false}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}
               />

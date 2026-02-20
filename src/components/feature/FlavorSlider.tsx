@@ -20,7 +20,7 @@ export function FlavorSlider({
 }: FlavorSliderProps) {
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="flex justify-between items-center text-sm font-medium text-muted-foreground">
+      <div className="flex justify-between items-center text-sm font-medium text-white/80">
         <span
           className={cn(
             "transition-colors",
